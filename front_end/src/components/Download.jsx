@@ -3,6 +3,15 @@ import React from 'react';
 
 const Download = () => {
     const handleDownload = async () => {
+
+
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        if (!isLoggedIn) {
+            alert('You must be logged in to download this image.');
+            return;
+        }
+
+        
         const response = await fetch('http://localhost:8080/download-image');
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
