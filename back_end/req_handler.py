@@ -1,15 +1,16 @@
 from flask import Flask, request, jsonify , send_file
 from flask_cors import CORS  # Import CORS from flask_cors
+from flask_socketio import SocketIO, emit
 import json  # This line imports the json module
+from termcolor import colored
+import time
+from data_collector import collector
 
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-
-
-
-store1 = 0
 
 
 @app.route('/capture-data', methods=['POST'])
@@ -74,5 +75,38 @@ def login():
     return jsonify({'success': False, 'message': 'Login failed. Check your email and password.'})
 
 
+@app.route('/submit-form', methods=['POST'])
+def submit_form():
+    data = request.json
+    nam:str = data.get('name')  # Ensure 'name' field is correctly extracted
+    comp:str = data.get('companyName')  # Ensure 'companyName' field is correctly extracted
+    print(colored(data , "green"))
+    # Emit a message to all connected clients
+    socketio.emit('message', {'text': f"Received data: Name - {data['name']}, Company Name - {data['companyName']}"})
+    
+    socketio.emit('message',{'text':'starting to fetch data !'})
+
+    print(colored('PROCESSING' , "yellow"))
+
+    # Debugging statements to ensure 'comp' contains the company name
+    
+
+    collector_instance = collector()
+
+    data = collector_instance.collect(nam , comp)
+
+    filename = 'results.json'
+
+    with open(filename, 'a') as f:
+        json.dump(data, f)
+        f.write('\n')
+    
+    socketio.emit('message',{'text':'The data is stored in results.json'})
+
+    print(colored('data is stored . PROCESS COMPLETED ' , "green"))
+
+    return jsonify({'message': "Data received and processed"})
+
+
 if __name__ == '__main__':
-    app.run(port=8080, debug=True)  # Run Flask on port 8080
+    app.run( port=8080, debug=True)

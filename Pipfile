@@ -4,6 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+xlsxwriter = "*"
+thready = "*"
+flask = "*"
+requests = "*"
+termcolor = "*"
+flask-cors = "*"
+flask-socketio = "*"
 
 [dev-packages]
 
