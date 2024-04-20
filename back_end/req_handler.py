@@ -42,7 +42,7 @@ def process_data(data):
 @app.route('/download-image', methods=['GET'])
 def download_image():
     # Provide the path to your image file
-    image_path = 'img.png'  # Adjust the path as needed
+    image_path = 'media\img.png'  # Adjust the path as needed
     return send_file(image_path, as_attachment=True)
 
 @app.route('/signup', methods=['POST'])

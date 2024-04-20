@@ -7,9 +7,11 @@ class collector():
         self.api_url = config_.API_URL
         self.api_key = config_.API_KEY
         self.product_version = config_.PRODUCT_VERSION
+        self.logo = config_.LOGO
 
         
     def collect(self,name:str,company:str):
+        print(colored(self.logo , 'magenta'))
         print('Retrival in process')
         
         url = f'{self.api_url}"{name} {company}"&type=link&key={self.api_key}'
