@@ -10,8 +10,7 @@ from data_collector import collector
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
-
-
+collector_instance = collector()
 
 @app.route('/capture-data', methods=['POST'])
 def capture_data():
@@ -78,8 +77,8 @@ def login():
 @app.route('/submit-form', methods=['POST'])
 def submit_form():
     data = request.json
-    nam:str = data.get('name')  # Ensure 'name' field is correctly extracted
-    comp:str = data.get('companyName')  # Ensure 'companyName' field is correctly extracted
+    name:str = data.get('name')  # Ensure 'name' field is correctly extracted
+    key_words:str = data.get('companyName')  # Ensure 'companyName' field is correctly extracted
     print(colored(data , "green"))
     # Emit a message to all connected clients
     socketio.emit('message', {'text': f"Received data: Name - {data['name']}, Company Name - {data['companyName']}"})
@@ -87,26 +86,41 @@ def submit_form():
     socketio.emit('message',{'text':'starting to fetch data !'})
 
     print(colored('PROCESSING' , "yellow"))
-
-    # Debugging statements to ensure 'comp' contains the company name
     
+     
+    data = collector_instance.collect(name ,key_words)
 
-    collector_instance = collector()
-
-    data = collector_instance.collect(nam , comp)
+    links:list = collector_instance.get_link(data)
+    print(colored(links , 'yellow'))
 
     filename = 'results.json'
 
     with open(filename, 'a') as f:
         json.dump(data, f)
         f.write('\n')
-    
+
+    # links = ['https://de.linkedin.com/in/ssterjo', 'https://www.xing.com/profile/Stiv_Sterjo', 'https://www.credential.net/87a1d4e6-6da2-4f56-914c-6b4927abeb4e', 'https://contactout.com/Stiv-Sterjo-69071354', 'https://www.linkedin.com/posts/ssterjo_cloud-googlecloud-activity-6644140715393720320-xGgA', 'https://www.credential.net/8f76c16b-7a43-427b-bd0a-beabbfcd2ba7', 'https://www.scrum.org/user/321890']
+    #comment links in real code
+
     socketio.emit('message',{'text':'The data is stored in results.json'})
 
     print(colored('data is stored . PROCESS COMPLETED ' , "green"))
 
-    return jsonify({'message': "Data received and processed"})
+    return jsonify({'links': links})
+
+@app.route('/submit-checked-links', methods=['POST'])
+def submit_checked_links():
+    data = request.json  # Expecting data to be a JSON containing the list of links
+    checked_links = data.get('links', [])  # Extract the list of checked links from the data
+    
+    print(colored(f"Checked Links Received: {checked_links}", "green"))
+    final_processing_data =  collector_instance.get_filtered_data(checked_links)
+    print(colored(final_processing_data,'light_magenta'))
+    # You might process these links further or log them as needed
+    # For this example, we'll just return a success message
+    return jsonify({'status': 'success', 'message': f'Received {len(checked_links)} links.'})
+
 
 
 if __name__ == '__main__':
-    app.run( port=8080, debug=True)
+    socketio.run( app , port=8080, debug=True)
