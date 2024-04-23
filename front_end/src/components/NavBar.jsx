@@ -1,6 +1,6 @@
 import React from 'react';
-import 'tailwindcss/tailwind.css';
 import { Link } from 'react-router-dom';
+import { Button } from "@/components/ui/button"
 
 const NavBar = () => {
   return (
@@ -13,9 +13,11 @@ const NavBar = () => {
         <Link to="/search" className="px-4 py-2 capitalize hover:bg-teal-300 hover:text-white rounded-lg transition-all duration-300">Search</Link>
         <Link to="/my-data" className="px-4 py-2 capitalize hover:bg-teal-300 hover:text-white rounded-lg transition-all duration-300">My Data</Link>
       </div>
-      <Link to="/signup" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded-full transition-all duration-300">
-        Sign Up
-      </Link>
+      <Button>
+        <Link to="/signup">
+          Sign Up
+        </Link>
+      </Button>
     </nav>
   );
 };

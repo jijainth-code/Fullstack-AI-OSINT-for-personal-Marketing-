@@ -30,7 +30,7 @@ class collector():
             return f"Error: {e}"
         
     def get_link(self,link):
-        post_ids = [post['postid'] for post in link['posts'] if 'postid' in post]
+        post_ids = [{'post_id':post['postid'] ,'detail':post['text'] } for post in link['posts'] if 'postid' in post]
         return post_ids
 
     def get_filtered_data(self , filtered_links ):

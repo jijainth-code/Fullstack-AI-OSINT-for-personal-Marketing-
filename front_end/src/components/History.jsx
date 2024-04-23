@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Line } from 'react-chartjs-2';
+
 import 'tailwindcss/tailwind.css';
-import 'chart.js/auto';
+
 
 const Hero = () => {
     // Sample data for the line chart
@@ -34,15 +34,7 @@ const Hero = () => {
         <main className="p-6">
             <div className=" max-w-7xl mx-auto">
                 {/* Graph UI */}
-                <div className="bg-white p-4 rounded-lg shadow mb-6 w-full h-96">
-                    <Line 
-                        data={data} 
-                        options={{
-                            maintainAspectRatio: false,
-                            responsive: true,
-                        }} 
-                    />
-                </div>
+                
 
                 {/* Email and Personal Note UI */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
