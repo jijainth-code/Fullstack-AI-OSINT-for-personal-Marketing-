@@ -88,18 +88,18 @@ def submit_form():
     print(colored('PROCESSING' , "yellow"))
     
      
-    data = collector_instance.collect(name ,key_words)
+    # data = collector_instance.collect(name ,key_words)
 
-    links:list = collector_instance.get_link(data)
-    print(colored(links , 'yellow'))
+    # links:list = collector_instance.get_link(data)
+    # print(colored(links , 'yellow'))
 
-    filename = 'results.json'
+    # filename = 'results.json'
 
-    with open(filename, 'a') as f:
-        json.dump(data, f)
-        f.write('\n')
+    # with open(filename, 'a') as f:
+    #     json.dump(data, f)
+    #     f.write('\n')
 
-    # links = ['https://de.linkedin.com/in/ssterjo', 'https://www.xing.com/profile/Stiv_Sterjo', 'https://www.credential.net/87a1d4e6-6da2-4f56-914c-6b4927abeb4e', 'https://contactout.com/Stiv-Sterjo-69071354', 'https://www.linkedin.com/posts/ssterjo_cloud-googlecloud-activity-6644140715393720320-xGgA', 'https://www.credential.net/8f76c16b-7a43-427b-bd0a-beabbfcd2ba7', 'https://www.scrum.org/user/321890']
+    links = ['https://de.linkedin.com/in/ssterjo', 'https://www.xing.com/profile/Stiv_Sterjo', 'https://www.credential.net/87a1d4e6-6da2-4f56-914c-6b4927abeb4e', 'https://contactout.com/Stiv-Sterjo-69071354', 'https://www.linkedin.com/posts/ssterjo_cloud-googlecloud-activity-6644140715393720320-xGgA', 'https://www.credential.net/8f76c16b-7a43-427b-bd0a-beabbfcd2ba7', 'https://www.scrum.org/user/321890']
     #comment links in real code
 
     socketio.emit('message',{'text':'The data is stored in results.json'})
