@@ -402,7 +402,7 @@ const Scrapper = () => {
 
                 <div className="bg-green-200 flex flex-col">
                     
-                    <Card style={{ height: '95vh' }}>
+                    <Card style={{ height: '95vh' , overflowY: 'auto' }}>
                     
                     {messages.map((message, index) => (
 
