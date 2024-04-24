@@ -11,6 +11,7 @@ requests = "*"
 termcolor = "*"
 flask-cors = "*"
 flask-socketio = "*"
+pymongo = {extras = ["srv"], version = "*"}
 
 [dev-packages]
 ipykernel = "*"
