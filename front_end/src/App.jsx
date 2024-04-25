@@ -4,6 +4,7 @@ import NavBar from './components/NavBar';
 import History from './components/History';
 import Search from './components/Search';
 import Mydata from './components/Mydata';
+import Login from './components/Login';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
             <Route path="/history" element={<History />} />
             <Route path="/my-data" element={<Mydata />} />
             <Route path="/search" element={<Search />} />
+            <Route path="/login" element={<Login />} />
           </Routes>
         </div>
       </div>

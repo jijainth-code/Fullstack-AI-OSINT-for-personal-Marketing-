@@ -69,10 +69,9 @@ class collector():
     #mongodb
 
     def search_history(self, id ):
-        
         db = self.db_client.get_database('osint')
         collection = db.users
-        document = collection.find_one({"user_data.user_name": id})
+        document = collection.find_one({"user_data.googleid": id})
 
         if document:
             self.searches = document['searches']['results']
@@ -95,14 +94,18 @@ class collector():
             return 1
         return 0
 
-    def find_user_document(self, user_id = 'jijainth'):#will be used in later improvement 
+    def find_or_register_user_document(self, user_id = "109680984892289690141"):#will be used in later improvement 
         db = self.db_client.get_database('osint')
         collection = db.users
-        filter_query = {"user_data.user_name": user_id}
-        document = collection.find_one({filter_query})
+        filter_query = {"user_data.googleid": user_id}
+        document = collection.find_one(filter_query)
         self.document = document
 
-        return self.document
+        if self.document is None:
+            print(colored("User document not found.Need to register" , 'red'))
+            return False
+
+        return True
     
 
     

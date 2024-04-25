@@ -14,8 +14,8 @@ const NavBar = () => {
         <Link to="/my-data" className="px-4 py-2 capitalize hover:bg-teal-300 hover:text-white rounded-lg transition-all duration-300">My Data</Link>
       </div>
       <Button>
-        <Link to="/signup">
-          Sign Up
+        <Link to="/login">
+          Login
         </Link>
       </Button>
     </nav>

@@ -59,19 +59,19 @@ def store_user_data(data):
         json.dump(data, f)
         f.write('\n')  # Add newline for each new entry
 
-@app.route('/login', methods=['POST'])
-def login():
-    user_credentials = request.json
-    email = user_credentials['email']
-    password = user_credentials['password']
-    # Read the users.json file to check credentials
-    with open('users.json', 'r') as file:
-        users = file.readlines()
-        for user in users:
-            user_data = json.loads(user)
-            if user_data['email'] == email and user_data['password'] == password:
-                return jsonify({'success': True, 'message': 'User is logged in.'})
-    return jsonify({'success': False, 'message': 'Login failed. Check your email and password.'})
+# @app.route('/login', methods=['POST'])
+# def login():
+#     user_credentials = request.json
+#     email = user_credentials['email']
+#     password = user_credentials['password']
+#     # Read the users.json file to check credentials
+#     with open('users.json', 'r') as file:
+#         users = file.readlines()
+#         for user in users:
+#             user_data = json.loads(user)
+#             if user_data['email'] == email and user_data['password'] == password:
+#                 return jsonify({'success': True, 'message': 'User is logged in.'})
+#     return jsonify({'success': False, 'message': 'Login failed. Check your email and password.'})
 
 
 @app.route('/submit-form', methods=['POST'])
@@ -116,8 +116,23 @@ def get_results():
     document_id = request.args.get('id')
 
     data = collector_instance.search_history(document_id)
-    print(colored('loaded data ids' , 'magenta'))
+    print(colored('loaded data using id ' , 'magenta'))
     return jsonify(data)
+
+@app.route('/login', methods=['POST'])
+def login():
+    user_data = request.json
+    email = user_data.get('email')
+    google_id = user_data.get('googleId')
+    print(colored(user_data, 'green'))
+    # Assume a function to check or register the user
+    if collector_instance.find_or_register_user_document(user_id= google_id):
+        return jsonify({'success': True, 'message': 'User is logged in or registered.'})
+    return jsonify({'success': False, 'message': 'Failed to log in or register.'})
+
+
+
 
 if __name__ == '__main__':
     socketio.run( app , port=8080, debug=True)
+
