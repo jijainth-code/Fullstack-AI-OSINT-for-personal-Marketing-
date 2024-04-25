@@ -83,40 +83,31 @@ const Login = () => {
   const handleLogout = () => {
     sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('userId');
-    window.location.reload()
-    //noty working , have to check whats the issue later ! for now i am using a session storage to handle my logout and login 
-    // const auth2 = window.gapi.auth2.getAuthInstance();
-    // auth2.signOut().then(() => {
-    //   console.log('User signed out.');
-    //   setIsLoggedIn(false);
-    //   // Remove login state from session storage
-    //   sessionStorage.removeItem('isLoggedIn');
-    // }
-    // );
+    window.location.reload();
   };
 
   return (
-    <Card className="mx-auto max-w-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl">{isLoggedIn ? "Logout" : "Login"}</CardTitle>
-        <CardDescription>
-          {isLoggedIn ? "You are logged in." : "Enter your email below to login to your account or use Google Sign-In"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="flex justify-center items-center h-full">
+      <Card className="mx-auto max-w-sm">
+        <CardHeader>
+          <CardTitle className="flex justify-center items-center text-2xl">{isLoggedIn ? "Logout" : "Sign In"}</CardTitle>
+          <CardDescription className="flex justify-center items-center">
+            {isLoggedIn ? "You are logged in." : "Enter your email below to sign in to your account using Google Sign-In"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center">
         {!isLoggedIn && (
-          <div className="grid gap-4">
+            <div className="grid gap-4">
             <div id="buttonDiv"></div>
-            <div className="mt-4 text-center text-sm">
-              Don’t have an account? <a href="#" className="underline">Sign up</a>
+            
             </div>
-          </div>
         )}
         {isLoggedIn && (
-          <Button onClick={handleLogout} className="w-full">Logout</Button>
+            <Button onClick={handleLogout} className="w-full">Logout</Button>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
