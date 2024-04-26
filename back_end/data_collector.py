@@ -141,18 +141,7 @@ class collector():
             return 1
         return 0
 
-    def find_or_register_user_document(self, user_id = "109680984892289690141"):#will be used in later improvement 
-        db = self.db_client.get_database('osint')
-        collection = db.users
-        filter_query = {"user_data.googleid": user_id}
-        document = collection.find_one(filter_query)
-        self.document = document
 
-        if self.document is None:
-            print(colored("User document not found.Need to register" , 'red'))
-            return False
-
-        return True
     
 
     
@@ -166,6 +155,266 @@ class collector():
             if result_item["meta"]["requestid"] == search_id:
                 return result_item
             
+    def find_or_register_user_document(self, user_id :str  ):#will be used in later improvement 
+        db = self.db_client.get_database('osint')
+        collection = db.users
+        filter_query = {"user_data.googleid": user_id}
+        document = collection.find_one(filter_query)
+        self.document = document
+
+        if self.document is None:
+            print(colored("User document not found.registering new user into database" , 'red'))
+            return False
+
+        return True
+    
+    def register_user_document(self, user_data  ):
+        db = self.db_client.get_database('osint')
+        collection = db.users
+        user_email = user_data.get('email')
+        google_id = user_data.get('googleId')
+        name = user_data.get('name')
+        picture_url = user_data.get('picture')
+            # Define the new document to be added, incorporating the passed parameters
+        new_document = {
+            "user_data": {
+                "email": user_email,
+                "googleid": google_id,
+                "name": name,
+                "picture": picture_url,
+                "personal_field_of_study": '',
+                "personal_intrest": '',
+                "personal_name": ''
+            },
+            "searches": {
+                "results": [
+                    {
+                        "meta": {
+                            "requestid": "e584dc774eba452a859c6fb2a4d1b67e",
+                            "http_code": 200,
+                            "network": "all",
+                            "query_type": "realtime",
+                            "limit": 20,
+                            "page": 0,
+                            "status": "finished"
+                        },
+                        "posts": [
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:41 +00000",
+                    "postid": "https://www.huawei.com/en/media-center/multimedia/videos/2023/transform-talks-patrick-glauner-ai",
+                    "text": "",
+                    "lang": "en",
+                    "type": "link",
+                    "sentiment": "negative",
+                    "url": "https://www.huawei.com/en/media-center/multimedia/videos/2023/transform-talks-patrick-glauner-ai",
+                    "user": {
+                    "name": "www.huawei.com",
+                    "url": "https:://www.huawei.com"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://www.huawei.com/en/media-center/multimedia/videos/2023/transform-talks-patrick-glauner-ai",
+                        "text": "80% of AI projects fail. Patrick Glauner says that's okay"
+                    }
+                    ]
+                },
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:40 +00000",
+                    "postid": "https://www.glauner.info/",
+                    "text": "Patrick Glauner is a Full Professor of Artificial Intelligence at Deggendorf Institute of Technology (Germany) since age 30. He has been ranked by CDO Magazine ...",
+                    "lang": "en",
+                    "type": "link",
+                    "sentiment": "neutral",
+                    "url": "https://www.glauner.info/",
+                    "user": {
+                    "name": "www.glauner.info",
+                    "url": "https:://www.glauner.info"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://www.glauner.info/",
+                        "text": "Professor Patrick Glauner"
+                    }
+                    ]
+                },
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:40 +00000",
+                    "postid": "https://scholar.google.com/citations?user=Z8kbRT4AAAAJ&hl=en",
+                    "text": "Patrick GLAUNER. Deggendorf Institute of Technology. Verified email at glauner.info - Homepage · Artificial IntelligenceMachine Learning ...",
+                    "type": "link",
+                    "sentiment": "neutral",
+                    "url": "https://scholar.google.com/citations?user=Z8kbRT4AAAAJ&hl=en",
+                    "user": {
+                    "name": "scholar.google.com",
+                    "url": "https:://scholar.google.com"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://scholar.google.com/citations?user=Z8kbRT4AAAAJ&hl=en",
+                        "text": "Patrick GLAUNER"
+                    }
+                    ]
+                },
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:40 +00000",
+                    "postid": "https://www.imperial.ac.uk/alumni/alumni-stories/patrick-glauner/",
+                    "text": "",
+                    "type": "link",
+                    "sentiment": "neutral",
+                    "url": "https://www.imperial.ac.uk/alumni/alumni-stories/patrick-glauner/",
+                    "user": {
+                    "name": "www.imperial.ac.uk",
+                    "url": "https:://www.imperial.ac.uk"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://www.imperial.ac.uk/alumni/alumni-stories/patrick-glauner/",
+                        "text": "Patrick Glauner | Alumni"
+                    }
+                    ]
+                },
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:40 +00000",
+                    "postid": "https://www.th-deg.de/en/Patrick-Glauner-Fakult%C3%A4t%20Angewandte%20Informatik-Professor:innen-2940",
+                    "text": "",
+                    "lang": "fr",
+                    "type": "link",
+                    "sentiment": "neutral",
+                    "url": "https://www.th-deg.de/en/Patrick-Glauner-Fakult%C3%A4t%20Angewandte%20Informatik-Professor:innen-2940",
+                    "user": {
+                    "name": "www.th-deg.de",
+                    "url": "https:://www.th-deg.de"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://www.th-deg.de/en/Patrick-Glauner-Fakult%C3%A4t%20Angewandte%20Informatik-Professor:innen-2940",
+                        "text": "Prof. Dr. Patrick Glauner"
+                    }
+                    ]
+                },
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:40 +00000",
+                    "postid": "https://de.linkedin.com/in/glauner",
+                    "text": "Regensburg, Bayern, Deutschland · Deggendorf Institute of TechnologyProf. Dr. Patrick Glauner. Deggendorf Institute of Technology Imperial College London. Regensburg, Bayern, Deutschland.",
+                    "type": "link",
+                    "sentiment": "neutral",
+                    "url": "https://de.linkedin.com/in/glauner",
+                    "user": {
+                    "name": "de.linkedin.com",
+                    "url": "https:://de.linkedin.com"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://de.linkedin.com/in/glauner",
+                        "text": "Prof. Dr. Patrick Glauner – Deggendorf Institute of ..."
+                    }
+                    ]
+                },
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:40 +00000",
+                    "postid": "https://www.fuhrmann-leadership.de/en/berater/prof-dr-patrick-glauner/",
+                    "text": "Patrick Glauner. PROFESSIONAL EXPERIENCE. Since 2022 Speaker and Consultant at Fuhrmann Leadership; Since 2020: Professor of Artificial Intelligence ...",
+                    "type": "link",
+                    "sentiment": "neutral",
+                    "url": "https://www.fuhrmann-leadership.de/en/berater/prof-dr-patrick-glauner/",
+                    "user": {
+                    "name": "www.fuhrmann-leadership.de",
+                    "url": "https:://www.fuhrmann-leadership.de"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://www.fuhrmann-leadership.de/en/berater/prof-dr-patrick-glauner/",
+                        "text": "Prof. Dr. Patrick Glauner - Karlsruhe"
+                    }
+                    ]
+                },
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:40 +00000",
+                    "postid": "https://www.researchgate.net/profile/Patrick-Glauner",
+                    "text": "Patrick GLAUNER, Professor (Full) | Cited by 595 | of Deggendorf Institute of Technology, Deggendorf (HDU) | Read 38 publications | Contact Patrick GLAUNER.",
+                    "lang": "en",
+                    "type": "link",
+                    "sentiment": "neutral",
+                    "url": "https://www.researchgate.net/profile/Patrick-Glauner",
+                    "user": {
+                    "name": "www.researchgate.net",
+                    "url": "https:://www.researchgate.net"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://www.researchgate.net/profile/Patrick-Glauner",
+                        "text": "Patrick Glauner Deggendorf Institute of Technology | HDU"
+                    }
+                    ]
+                },
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:40 +00000",
+                    "postid": "https://www.amazon.com/stores/Patrick%20Glauner/author/B086JYFRB8",
+                    "text": "Dr. Patrick Glauner is a Full Professor of Artificial Intelligence at Deggendorf Institute of Technology since age 30. He has been ranked by CDO Magazine ...",
+                    "lang": "en",
+                    "type": "link",
+                    "sentiment": "neutral",
+                    "url": "https://www.amazon.com/stores/Patrick%20Glauner/author/B086JYFRB8",
+                    "user": {
+                    "name": "www.amazon.com",
+                    "url": "https:://www.amazon.com"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://www.amazon.com/stores/Patrick%20Glauner/author/B086JYFRB8",
+                        "text": "Patrick Glauner: books, biography, latest update"
+                    }
+                    ]
+                },
+                {
+                    "network": "web",
+                    "posted": "2024-04-24 13:10:40 +00000",
+                    "postid": "https://www.glauner.info/teaching",
+                    "text": "Professor Patrick Glauner · Home · Books and Publications · Consulting · CV · Expert Evidence · News Coverage · Teaching ... Professor Patrick Glauner. Deggendorf ...",
+                    "lang": "en",
+                    "type": "link",
+                    "sentiment": "neutral",
+                    "url": "https://www.glauner.info/teaching",
+                    "user": {
+                    "name": "www.glauner.info",
+                    "url": "https:://www.glauner.info"
+                    },
+                    "urls": [
+                    {
+                        "url": "https://www.glauner.info/teaching",
+                        "text": "Professor Patrick Glauner - Teaching"
+                    }
+                    ]
+                }
+                ],
+                "user_search_key": {
+                "name": "patrick Glauner",
+                "keywords": "wdawdaw"
+                }
+            }
+            ]
+        },
+            "subscription": {
+                "type": "free",
+                "tokens": 3
+            },
+            "chat_history": {}
+        }
+        result = collection.insert_one(new_document)
+        print(colored('new user added to the database! ' , 'light_blue'))
+
+        # Insert the document into the MongoDB collection
+
+                
         
 
 

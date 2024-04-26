@@ -140,9 +140,10 @@ def login():
     email = user_data.get('email')
     google_id = user_data.get('googleId')
     print(colored(user_data, 'green'))
-    if collector_instance.find_or_register_user_document(user_id= google_id):
+    if collector_instance.find_or_register_user_document(user_id= google_id ):
         return jsonify({'success': True, 'message': 'User is logged in or registered.'})
-    return jsonify({'success': False, 'message': 'Failed to log in or register.'})
+    collector_instance.register_user_document(user_data)
+    return jsonify({'success': True, 'message': 'New User Created ! '})
 
 
 
