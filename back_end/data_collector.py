@@ -17,6 +17,7 @@ class collector():
         self.data:dict = {}
         self.db_client = MongoClient(self.db_url, server_api=ServerApi('1'))
         self.searches:list = []
+        self.user_searches:list = []
         self.document = None
         
     def collect(self,name:str,key_words:str):
@@ -68,6 +69,40 @@ class collector():
 
     #mongodb
 
+    def set_user_data(self, id, data):
+        db = self.db_client.get_database('osint')
+        collection = db.users
+
+        # Attempt to find the document with the provided Google ID
+        document = collection.find_one({"user_data.googleid": id})
+
+        if document:
+            # Update fields within the 'user_data' dictionary
+            updated_data = {
+                "user_data.personal_name": data.get('name', document['user_data'].get('personal_name', '')),
+                "user_data.personal_field_of_study": data.get('fieldOfStudy', document['user_data'].get('personal_field_of_study', '')),
+                "user_data.personal_intrest": data.get('interests', document['user_data'].get('personal_intrest', ''))
+            }
+            
+            # Perform the update operation
+            update_result = collection.update_one(
+                {"user_data.googleid": id},
+                {"$set": updated_data}
+            )
+            
+            # Check if the update was successful
+            if update_result.modified_count > 0:
+                print("User data updated successfully.")
+                return {"success": True, "message": "User data updated successfully."}
+            else:
+                print("No changes were made to the user data.")
+                return {"success": False, "message": "No changes were made to the user data."}
+        else:
+            # Handle the case where no user matches the provided ID
+            print("No user found with the provided ID.")
+            return {"success": False, "message": "No user found with the provided ID."}
+
+
     def search_history(self, id ):
         db = self.db_client.get_database('osint')
         collection = db.users
@@ -76,6 +111,18 @@ class collector():
         if document:
             self.searches = document['searches']['results']
             return document['searches']['results']
+        
+        return 'no data found'
+    
+    def search_history_user(self, id ):
+        db = self.db_client.get_database('osint')
+        collection = db.users
+        document = collection.find_one({"user_data.googleid": id})
+
+        
+        if document:
+            self.user_searches = document['user_data']
+            return document['user_data']
         
         return 'no data found'
 

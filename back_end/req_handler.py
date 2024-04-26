@@ -59,19 +59,7 @@ def store_user_data(data):
         json.dump(data, f)
         f.write('\n')  # Add newline for each new entry
 
-# @app.route('/login', methods=['POST'])
-# def login():
-#     user_credentials = request.json
-#     email = user_credentials['email']
-#     password = user_credentials['password']
-#     # Read the users.json file to check credentials
-#     with open('users.json', 'r') as file:
-#         users = file.readlines()
-#         for user in users:
-#             user_data = json.loads(user)
-#             if user_data['email'] == email and user_data['password'] == password:
-#                 return jsonify({'success': True, 'message': 'User is logged in.'})
-#     return jsonify({'success': False, 'message': 'Login failed. Check your email and password.'})
+
 
 
 @app.route('/submit-form', methods=['POST'])
@@ -119,13 +107,39 @@ def get_results():
     print(colored('loaded data using id ' , 'magenta'))
     return jsonify(data)
 
+@app.route('/get-results-user', methods=['GET'])
+def get_results_user():
+    document_id = request.args.get('id')
+
+    data = collector_instance.search_history_user(document_id)
+    print(colored(f'loaded data using id {document_id}' , 'magenta'))
+    print(colored(data , 'blue'))
+    return jsonify(data)
+
+@app.route('/save-user-data', methods=['POST'])
+def save_user_data():
+    userId = request.args.get('id')
+    values = request.get_json()
+
+    if not userId:
+        return jsonify({'error': 'No user ID provided'}), 400
+
+    if not values:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    data = collector_instance.set_user_data(userId, values)
+    print(colored(f"Data saved for user {userId}: {data}", 'red'))
+    return jsonify({'success': True, 'data': data}), 200
+
+
+    
+
 @app.route('/login', methods=['POST'])
 def login():
     user_data = request.json
     email = user_data.get('email')
     google_id = user_data.get('googleId')
     print(colored(user_data, 'green'))
-    # Assume a function to check or register the user
     if collector_instance.find_or_register_user_document(user_id= google_id):
         return jsonify({'success': True, 'message': 'User is logged in or registered.'})
     return jsonify({'success': False, 'message': 'Failed to log in or register.'})
