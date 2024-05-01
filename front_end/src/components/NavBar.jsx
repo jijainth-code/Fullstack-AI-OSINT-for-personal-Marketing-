@@ -9,6 +9,7 @@ const NavBar = () => {
   const handleLogout = () => {
     sessionStorage.removeItem('isLoggedIn');  // Remove login status
     sessionStorage.removeItem('userId');      // Remove user ID
+    sessionStorage.removeItem('requestId'); 
     navigate('/');  // Optionally navigate to homepage or login page
     window.location.reload();  // Reload to apply changes
   };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
+import { Link, useNavigate } from 'react-router-dom';
 
 
 
@@ -64,79 +65,14 @@ const Scrapper = () => {
     const [isPersonalDataChecked, setIsPersonalDataChecked] = useState(false);
     const [contentType, setContentType] = useState('');
     const [userMessage, setUserMessage] = useState('');
-    const socket = io('http://localhost:8080');
-
-    const invoices = [
-        {
-          invoice: "INV001",
-          paymentStatus: "Paid",
-          totalAmount: "$250.00",
-          paymentMethod: "Credit Card",
-        },
-        {
-          invoice: "INV002",
-          paymentStatus: "Pending",
-          totalAmount: "$150.00",
-          paymentMethod: "PayPal",
-        },
-        {
-          invoice: "INV003",
-          paymentStatus: "Unpaid",
-          totalAmount: "$350.00",
-          paymentMethod: "Bank Transfer",
-        },
-        {
-          invoice: "INV004",
-          paymentStatus: "Paid",
-          totalAmount: "$450.00",
-          paymentMethod: "Credit Card",
-        },
-        {
-          invoice: "INV005",
-          paymentStatus: "Paid",
-          totalAmount: "$550.00",
-          paymentMethod: "PayPal",
-        },
-        {
-          invoice: "INV006",
-          paymentStatus: "Pending",
-          totalAmount: "$200.00",
-          paymentMethod: "Bank Transfer",
-        },
-        {
-          invoice: "INV007",
-          paymentStatus: "Unpaid",
-          totalAmount: "$300.00",
-          paymentMethod: "Credit Card",
-        },
-      ]
-
-
-    const frameworks = [
-        {
-          value: "next.js",
-          label: "Next.js",
-        },
-        {
-          value: "sveltekit",
-          label: "SvelteKit",
-        },
-        {
-          value: "nuxt.js",
-          label: "Nuxt.js",
-        },
-        {
-          value: "remix",
-          label: "Remix",
-        },
-        {
-          value: "astro",
-          label: "Astro",
-        },
-      ]
-
+    const [searchCompleted, setSearchCompleted] = useState(false);
+    const [generatedInfo, setGeneratedInfo] = useState([]);  // State to hold generated data
+    const [isCreating, setIsCreating] = useState(true);
     
 
+    const navigate = useNavigate();
+    
+    const socket = io('http://localhost:8080');
 
     useEffect(() => {
         socket.on('message', (message) => {
@@ -151,10 +87,13 @@ const Scrapper = () => {
 
     const handleCheckboxChange = (link) => {
         setCheckedLinks(prevState => ({
-          ...prevState,
-          [link]: !prevState[link] // Toggle the checkbox state
+            ...prevState,
+            [link.post_id]: { // Use post_id as the key
+                isChecked: !prevState[link.post_id]?.isChecked, // Toggle checked state
+                details: link.detail // Always store the details
+            }
         }));
-      };
+    };
 
     const handleCheckAll = () => {
         const newCheckedLinks = {};
@@ -185,14 +124,21 @@ const Scrapper = () => {
         setUserMessage(e.target.value);
     };
 
-    const handleCreateClick = () => {
-        console.log("Checkbox Value (Use Personal Data):", isPersonalDataChecked);
-        console.log("Selected Content Type:", contentType);
-        console.log("Message:", userMessage);
-    };
+    
 
     const handleSubmit = async e => {
         e.preventDefault();
+    
+        // Check if the user is logged in from session storage
+        const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+        const userId = sessionStorage.getItem('userId'); // Retrieve the user ID from session storage
+    
+        if (!isLoggedIn) {
+            // If not logged in, redirect to login page
+            navigate('/login');
+            return;
+        }
+    
         setErrorMessage('');
         try {
             const response = await fetch('http://localhost:8080/submit-form', {
@@ -200,42 +146,123 @@ const Scrapper = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    formData, // Pass the formData as a nested object
+                    userId // Add userId to the payload separately
+                }),
             });
             if (!response.ok) throw new Error('Failed to submit form');
             const result = await response.json();
             setLinks(result.links);
+            setSearchCompleted(true); // Enable the generate data button upon successful search
+            if (result.requestId) {
+                sessionStorage.setItem('requestId', result.requestId);
+            }
         } catch (error) {
             setErrorMessage(error.message);
+            setSearchCompleted(false); // Disable the generate data button if there's an error
         }
     };
+    
+    
 
     const handle_checked_Submit = async () => {
+        if (!searchCompleted) return;  // Prevent function execution if it's already running
+        setSearchCompleted(false);  // Disable the button when the function starts
+    
+        const userId = sessionStorage.getItem('userId');
+        const requestId = sessionStorage.getItem('requestId');
         const checkedItems = Object.entries(checkedLinks)
-                                  .filter(([_, isChecked]) => isChecked)
-                                  .map(([link]) => link);
-
+            .filter(([_, data]) => data.isChecked)
+            .map(([post_id, data]) => ({
+                post_id: post_id,
+                details: data.details
+            }));
+    
         try {
             const response = await fetch('http://localhost:8080/submit-checked-links', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ links: checkedItems }),
+                body: JSON.stringify({
+                    links: checkedItems,
+                    formData: formData,
+                    userId,
+                    requestId
+                })
             });
             if (!response.ok) throw new Error('Failed to submit checked links');
-            const result = await response.json();
-            console.log(result); // Handle success
+            const generatedData = await response.json();
+            console.log(generatedData);
+            setGeneratedInfo(generatedData); // Update state with the received data
         } catch (error) {
             console.error('Error:', error);
+        } finally {
+            setSearchCompleted(true); // Re-enable the button once the function completes or fails
         }
     };
 
+    const handleCreateSubmit = async (e) => {
+        e.preventDefault();  // Prevent the default form submission behavior
+        if (!isCreating) return;  // Prevent function execution if it's already running
+        setIsCreating(false);  // Disable the button when the function starts
+    
+        // Check if the content type is selected
+        if (!userMessage) {
+            alert('Please write a message before submitting.');
+            setIsCreating(true);  // Re-enable the button if form validation fails
+            return;  // Prevent the submission if content type is not selected
+        }
+        if (!contentType) {
+            alert('Please select a content type before submitting.');
+            setIsCreating(true);  // Re-enable the button if form validation fails
+            return;  // Prevent the submission if content type is not selected
+        }
+
+    
+        const userId = sessionStorage.getItem('userId');
+        const requestId = sessionStorage.getItem('requestId');
+        // Form data to be sent to the backend
+        const payload = {
+            personalDataConsent: isPersonalDataChecked,
+            contentType: contentType,
+            message: userMessage,
+            formData: formData,
+            requestId,
+            userId
+        };
+    
+        try {
+            const response = await fetch('http://localhost:8080/create-submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to submit data');
+            }
+    
+            const result = await response.json();
+            console.log('Success:', result);
+            // Handle any additional tasks or state updates based on success
+        } catch (error) {
+            console.error('Error:', error);
+            // Optionally update state to show error to the user
+        } finally {
+            setIsCreating(true);  // Re-enable the button once the function completes or fails
+        }
+    };
+    
+    
 
     
  
     
-    const array = [1, 2, 3, 4, 5];
+
     
 
     return (
@@ -283,22 +310,24 @@ const Scrapper = () => {
                     {/* Linkssss */}
 
                     {links.map((link, index) => (
-
-
                         <div key={index} className="items-top flex p-4 space-x-2">
-                        <input type="checkbox" id={`custom-checkbox-${index}`} checked={!!checkedLinks[link.post_id]} onChange={() => handleCheckboxChange(link.post_id)} />
-                        <div className="grid gap-1.5 leading-none">
-                            <label
-                            htmlFor={`custom-checkbox-${index}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            <a href={link.post_id} target="_blank" rel="noopener noreferrer" class="hover:text-blue-400"><Button variant="link">{link.post_id}</Button></a> 
-                            </label>
-                            <p className="text-sm text-muted-foreground">
-                            {link.detail || "No additional information available."}
-                            </p>
+                            <input
+                                type="checkbox"
+                                id={`custom-checkbox-${index}`}
+                                checked={!!checkedLinks[link.post_id]?.isChecked}
+                                onChange={() => handleCheckboxChange(link)} // Pass the entire link object
+                            />
+                            <div className="grid gap-1.5 leading-none">
+                                <label htmlFor={`custom-checkbox-${index}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    <a href={link.post_id} target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
+                                        {link.post_id}
+                                    </a>
+                                </label>
+                                <p className="text-sm text-muted-foreground">
+                                    {link.detail || "No additional information available."}
+                                </p>
+                            </div>
                         </div>
-                        </div>
-
                     ))}
 
                     
@@ -306,7 +335,7 @@ const Scrapper = () => {
 
                     <Card style={{ height: '10%', marginBottom: '1rem' }}>
                     <div className="grid w-full  gap-2 flex-shrink-0 ">
-                    <Button onClick={handle_checked_Submit}>Generate Data</Button>
+                    <Button onClick={handle_checked_Submit} disabled={!searchCompleted}>Generate Data</Button>
                     </div>
 
                     </Card>
@@ -317,81 +346,56 @@ const Scrapper = () => {
 
                 <div className="bg-red-200 flex flex-col">
                     
-                    <Card style={{ height: '60vh', marginBottom: '1rem' }}>
+                    <Card style={{ height: '60vh', marginBottom: '1rem' , overflowY: 'auto'}}>
                     {/* generated info */}
 
+                    <p className="m-6 p-2 text-xs overflow-auto max-h-full w-full whitespace-pre-wrap">
+                        {generatedInfo}
+                    </p>
                     
-
-                        <Table>
-                        <TableCaption>A list of your recent invoices.</TableCaption>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead className="w-[100px]">Invoice</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Method</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {invoices.map((invoice) => (
-                            <TableRow key={invoice.invoice}>
-                                <TableCell className="font-medium">{invoice.invoice}</TableCell>
-                                <TableCell>{invoice.paymentStatus}</TableCell>
-                                <TableCell>{invoice.paymentMethod}</TableCell>
-                                <TableCell className="text-right">{invoice.totalAmount}</TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                        <TableFooter>
-                            <TableRow>
-                            <TableCell colSpan={3}>Total</TableCell>
-                            <TableCell className="text-right">$2,500.00</TableCell>
-                            </TableRow>
-                        </TableFooter>
-                        </Table>
-
-                    
-
-                    
-
                     </Card>
 
                     <Card style={{ height: '30vh', marginBottom: '1rem' }}>
-            <Card style={{ height: '30%' }}>
-                <div className="items-top flex space-x-2">
-                    <Checkbox id="terms1" checked={isPersonalDataChecked} onCheckedChange={handlePersonalDataConsentChange}>
-                        <Checkbox.Indicator>
-                            {/* Customize your indicator here */}
-                        </Checkbox.Indicator>
-                    </Checkbox>
-                    <div className="grid gap-1.5 leading-none">
-                        <Label htmlFor="terms1" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Use Personal Data
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                            You agree to Feed the model with personal data.
-                        </p>
-                    </div>
-                </div>
 
-                <Select onValueChange={handleSelectChange} value={contentType}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="content type" required />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            <SelectLabel>Types</SelectLabel>
-                            <SelectItem value="message">Message</SelectItem>
-                            <SelectItem value="email">Email</SelectItem>
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
+            <Card style={{ height: '30%' }}>
+            <div className="items-top flex space-x-2">
+                <input
+                    id="terms1"
+                    type="checkbox"
+                    checked={isPersonalDataChecked}
+                    onChange={handlePersonalDataConsentChange}
+                    className="mt-1 align-top bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-4 w-4 text-blue-600 border rounded"
+                />
+                <div className="grid gap-1.5 leading-none">
+                    <label htmlFor="terms1" className="text-sm font-medium leading-none cursor-pointer">
+                        Use Personal Data
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                        You agree to Feed the model with personal data.
+                    </p>
+                </div>
+            </div>
+
+            <div className="mt-4">
+                <label htmlFor="contentType" className="block text-sm font-medium text-gray-700">Content Type</label>
+                <select
+                    id="contentType"
+                    value={contentType}
+                    onChange={handleSelectChange}
+                    className="mt-1 block w-[180px] pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                    required
+                >
+                    <option value="">Select content type</option>
+                    <option value="message">Message</option>
+                    <option value="email">Email</option>
+                </select>
+            </div>
             </Card>
 
             <Card style={{ height: '30vh', marginBottom: '1rem' }}>
                 <div className="grid w-full h-full gap-2">
                     <textarea placeholder="Type your message here." value={userMessage} onChange={handleMessageChange} className="textarea"/>
-                    <Button onClick={handleCreateClick}>Create</Button>
+                    <Button onClick={handleCreateSubmit} disabled={!isCreating || !generatedInfo || generatedInfo.length === 0}>Create</Button>
                 </div>
             </Card>
         </Card>

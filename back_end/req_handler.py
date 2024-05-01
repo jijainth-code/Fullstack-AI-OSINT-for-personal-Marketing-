@@ -12,11 +12,11 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 collector_instance = collector()
 
+
 @app.route('/capture-data', methods=['POST'])
 def capture_data():
     data = request.json  # Assuming data is sent as JSON
     # Process the data and trigger the Python function
-
     print(data)
 
     # Use the global keyword to modify the global variable
@@ -65,6 +65,10 @@ def store_user_data(data):
 @app.route('/submit-form', methods=['POST'])
 def submit_form():
     data = request.json
+    user_id =data.get('userId')
+    print(colored(user_id , 'red'))
+    data = data.get('formData' , {})
+
     name:str = data.get('name')  # Ensure 'name' field is correctly extracted
     key_words:str = data.get('companyName')  # Ensure 'companyName' field is correctly extracted
     print(colored(data , "green"))
@@ -76,28 +80,50 @@ def submit_form():
     print(colored('PROCESSING' , "yellow"))
     
      
-    data = collector_instance.collect(name ,key_words)
-    print(colored(data,'red'))
+    data , request_id = collector_instance.collect(name ,key_words , user_id)
+    print(colored(f'data :{request_id}','red'))
+
     links:list = collector_instance.get_link(data)
     print(colored(links , 'yellow'))
-
- 
-        
     
 
     socketio.emit('message',{'text':'The data is stored in the mongoDB'})
 
     print(colored('data is stored . PROCESS COMPLETED ' , "green"))
 
-    return jsonify({'links': links})
+    return jsonify({'links': links , 'requestId':request_id })
+
+
 
 @app.route('/submit-checked-links', methods=['POST'])
 def submit_checked_links():
     data = request.json
     checked_links = data.get('links', [])
-    print(colored(f"Checked Links Received: {checked_links}", "green"))
+    form_data = data.get('formData', {})
+    user_id = data.get('userId')
+    request_id = data.get('requestId')
+    name = form_data['name']
+    keyword = form_data['companyName']
+    full_name = name + ' ' + keyword
+    # print(colored(f"Form Data Received: {full_name}", "blue"))
+    # print(colored(f"Checked Links Received: {checked_links}", "green"))
     # Further processing can be added here
-    return jsonify({'status': 'success', 'message': f'Received {len(checked_links)} links.'})
+    print(colored(f"userid Received: {user_id}", "green"))
+
+
+    generated_data = collector_instance.generate_info_from_link(checked_links , full_name)
+
+    if collector_instance.store_generated_data_from_links(user_id , request_id , generated_data ):
+        socketio.emit('message',{'text':'gen_link_info data stored in the MongoDb'})
+
+
+    # print(colored(generated_data , 'light_magenta'))
+    return jsonify(generated_data)
+    
+
+
+
+
 
 @app.route('/get-results', methods=['GET'])
 def get_results():
@@ -146,6 +172,55 @@ def login():
     return jsonify({'success': True, 'message': 'New User Created ! '})
 
 
+@app.route('/create-submit', methods=['POST'])
+def create_data():
+    data = request.json
+    personal_data_consent = data.get('personalDataConsent', False)  # Checkbox state
+    content_type = data.get('contentType', '')  # Selected item from the combo box
+    message = data.get('message', '')  # Text from the textarea
+    form_data = data.get('formData', {})
+    name = form_data['name']
+    keyword = form_data['companyName']
+    user_id = data.get('userId', '')  # User ID if needed for further processing
+    request_id = data.get('requestId')
+    # Logging for debugging
+    query_data = f"Message: {message} ,User ID: {user_id}, Request ID : {request_id} , Consent: {personal_data_consent}, Content Type: {content_type}" 
+    print(colored(query_data , 'blue'))
+
+    personal_data = collector_instance.get_user_data(user_id , personal_data_consent)
+    generated_data = collector_instance.get_generated_data_from_links(user_id , request_id)
+    # print(colored(personal_data,'yellow'))
+    # print(colored(generated_data,'blue'))
+    # print(colored(content_type,'green'))
+    # print(colored('generating chat response','magenta'))
+    response = collector_instance.chat_response(generated_data,personal_data , content_type , message )
+    # print(colored(generated_data , 'yellow'))
+
+    if collector_instance.store_chat_response(user_id , request_id , query_data , response):
+        socketio.emit('message',{'text':f'{response}'})
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Data processed successfully',
+                    }), 200
+
+    return jsonify({
+            'status': 'failed',
+            'message': 'Failed to process data and store chat response.',
+                    }), 200
+    
+
+
+    # chat_response = chat_response
+
+
+    
+
+
+
+
+
+    
 
 
 if __name__ == '__main__':

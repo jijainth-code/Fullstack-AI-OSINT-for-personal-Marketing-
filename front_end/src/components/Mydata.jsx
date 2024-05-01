@@ -106,7 +106,8 @@ const Mydata = () => {
                 <Input id="fieldOfStudy" name="fieldOfStudy" placeholder="e.g., Artificial Intelligence" value={userData.fieldOfStudy} onChange={handleChange} />
               </div>
               <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="interests">Interests</Label>
+                <Label htmlFor="interests">Introduce yourself
+                </Label>
                 <Input id="interests" name="interests" placeholder="Give some of your selling points" value={userData.interests} onChange={handleChange} />
               </div>
             </div>
