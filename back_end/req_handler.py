@@ -87,7 +87,7 @@ def submit_form():
     print(colored(links , 'yellow'))
     
 
-    socketio.emit('message',{'text':'The data is stored in the mongoDB'})
+    # socketio.emit('message',{'text':'The data is stored in the mongoDB'})
 
     print(colored('data is stored . PROCESS COMPLETED ' , "green"))
 
@@ -114,7 +114,7 @@ def submit_checked_links():
     generated_data = collector_instance.generate_info_from_link(checked_links , full_name)
 
     if collector_instance.store_generated_data_from_links(user_id , request_id , generated_data ):
-        socketio.emit('message',{'text':'gen_link_info data stored in the MongoDb'})
+        socketio.emit('message',{'text':'The data is stored in the mongoDB'})
 
 
     # print(colored(generated_data , 'light_magenta'))

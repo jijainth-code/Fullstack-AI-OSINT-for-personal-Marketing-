@@ -413,7 +413,6 @@ const Scrapper = () => {
 
                         <Alert>
                         <AlertTitle>{message.time}:</AlertTitle>
-                        <Badge variant="destructive">Prototype</Badge>
                         <Badge>Beta</Badge>
                         <AlertDescription>
                         {message.text}
