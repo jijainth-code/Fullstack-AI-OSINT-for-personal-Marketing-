@@ -12,11 +12,11 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 collector_instance = collector()
 
+
 @app.route('/capture-data', methods=['POST'])
 def capture_data():
     data = request.json  # Assuming data is sent as JSON
     # Process the data and trigger the Python function
-
     print(data)
 
     # Use the global keyword to modify the global variable
@@ -59,24 +59,16 @@ def store_user_data(data):
         json.dump(data, f)
         f.write('\n')  # Add newline for each new entry
 
-@app.route('/login', methods=['POST'])
-def login():
-    user_credentials = request.json
-    email = user_credentials['email']
-    password = user_credentials['password']
-    # Read the users.json file to check credentials
-    with open('users.json', 'r') as file:
-        users = file.readlines()
-        for user in users:
-            user_data = json.loads(user)
-            if user_data['email'] == email and user_data['password'] == password:
-                return jsonify({'success': True, 'message': 'User is logged in.'})
-    return jsonify({'success': False, 'message': 'Login failed. Check your email and password.'})
+
 
 
 @app.route('/submit-form', methods=['POST'])
 def submit_form():
     data = request.json
+    user_id =data.get('userId')
+    print(colored(user_id , 'red'))
+    data = data.get('formData' , {})
+
     name:str = data.get('name')  # Ensure 'name' field is correctly extracted
     key_words:str = data.get('companyName')  # Ensure 'companyName' field is correctly extracted
     print(colored(data , "green"))
@@ -88,31 +80,149 @@ def submit_form():
     print(colored('PROCESSING' , "yellow"))
     
      
-    data = collector_instance.collect(name ,key_words)
-    print(colored(data,'red'))
+    data , request_id = collector_instance.collect(name ,key_words , user_id)
+    print(colored(f'data :{request_id}','red'))
+
     links:list = collector_instance.get_link(data)
     print(colored(links , 'yellow'))
-
- 
-        
-    # links = [{'post_id': 'https://de.linkedin.com/in/ssterjo', 'detail': 'München, Bayern, Deutschland · GoogleEhrenamt · Mentor for Foreign Students. MINGA Program, TUM. Feb. 2013 – Sept. 2013 8 Monaten. Education · IT Support & Event Planner. FRESSH (Euro-Socialist\xa0...'}, {'post_id': 'https://www.xing.com/profile/Stiv_Sterjo', 'detail': ''}, {'post_id': 'https://www.credential.net/87a1d4e6-6da2-4f56-914c-6b4927abeb4e', 'detail': 'A Professional Cloud Network Engineer implements and manages network architectures in Google Cloud. This individual may work on networking or cloud teams\xa0...'}, {'post_id': 'https://contactout.com/Stiv-Sterjo-69071354', 'detail': "View Stiv Sterjo's business profile as Consultant Data Analytics at Teradata. Get Stiv Sterjo's email: s****o@gmail.com, phone: (**) *** *** 410, and more."}, {'post_id': 'https://www.linkedin.com/posts/ssterjo_cloud-googlecloud-activity-6644140715393720320-xGgA', 'detail': "Stiv Sterjo's Post. View profile for Stiv Sterjo. Stiv Sterjo. Entrepreneur // Innovation Evangelist // Googler // Tech Leader // Author\xa0..."}, {'post_id': 'https://www.credential.net/8f76c16b-7a43-427b-bd0a-beabbfcd2ba7', 'detail': 'A Google Cloud Certified - Professional Cloud Architect enables organizations to leverage Google Cloud technologies. Through an understanding of cloud\xa0...'}, {'post_id': 'https://www.scrum.org/user/321890', 'detail': "Stiv Sterjo · Social Media · Stiv's Certifications · Classes Attended by Stiv · Footer Navigation · Footer."}]
-    # #comment links in real code
+    
 
     socketio.emit('message',{'text':'The data is stored in the mongoDB'})
 
     print(colored('data is stored . PROCESS COMPLETED ' , "green"))
 
-    return jsonify({'links': links})
+    return jsonify({'links': links , 'requestId':request_id })
+
+
 
 @app.route('/submit-checked-links', methods=['POST'])
 def submit_checked_links():
     data = request.json
     checked_links = data.get('links', [])
-    print(colored(f"Checked Links Received: {checked_links}", "green"))
+    form_data = data.get('formData', {})
+    user_id = data.get('userId')
+    request_id = data.get('requestId')
+    name = form_data['name']
+    keyword = form_data['companyName']
+    full_name = name + ' ' + keyword
+    # print(colored(f"Form Data Received: {full_name}", "blue"))
+    # print(colored(f"Checked Links Received: {checked_links}", "green"))
     # Further processing can be added here
-    return jsonify({'status': 'success', 'message': f'Received {len(checked_links)} links.'})
+    print(colored(f"userid Received: {user_id}", "green"))
 
+
+    generated_data = collector_instance.generate_info_from_link(checked_links , full_name)
+
+    if collector_instance.store_generated_data_from_links(user_id , request_id , generated_data ):
+        socketio.emit('message',{'text':'gen_link_info data stored in the MongoDb'})
+
+
+    # print(colored(generated_data , 'light_magenta'))
+    return jsonify(generated_data)
+    
+
+
+
+
+
+@app.route('/get-results', methods=['GET'])
+def get_results():
+    document_id = request.args.get('id')
+
+    data = collector_instance.search_history(document_id)
+    print(colored('loaded data using id ' , 'magenta'))
+    return jsonify(data)
+
+@app.route('/get-results-user', methods=['GET'])
+def get_results_user():
+    document_id = request.args.get('id')
+
+    data = collector_instance.search_history_user(document_id)
+    print(colored(f'loaded data using id {document_id}' , 'magenta'))
+    print(colored(data , 'blue'))
+    return jsonify(data)
+
+@app.route('/save-user-data', methods=['POST'])
+def save_user_data():
+    userId = request.args.get('id')
+    values = request.get_json()
+
+    if not userId:
+        return jsonify({'error': 'No user ID provided'}), 400
+
+    if not values:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    data = collector_instance.set_user_data(userId, values)
+    print(colored(f"Data saved for user {userId}: {data}", 'red'))
+    return jsonify({'success': True, 'data': data}), 200
+
+
+    
+
+@app.route('/login', methods=['POST'])
+def login():
+    user_data = request.json
+    email = user_data.get('email')
+    google_id = user_data.get('googleId')
+    print(colored(user_data, 'green'))
+    if collector_instance.find_or_register_user_document(user_id= google_id ):
+        return jsonify({'success': True, 'message': 'User is logged in or registered.'})
+    collector_instance.register_user_document(user_data)
+    return jsonify({'success': True, 'message': 'New User Created ! '})
+
+
+@app.route('/create-submit', methods=['POST'])
+def create_data():
+    data = request.json
+    personal_data_consent = data.get('personalDataConsent', False)  # Checkbox state
+    content_type = data.get('contentType', '')  # Selected item from the combo box
+    message = data.get('message', '')  # Text from the textarea
+    form_data = data.get('formData', {})
+    name = form_data['name']
+    keyword = form_data['companyName']
+    user_id = data.get('userId', '')  # User ID if needed for further processing
+    request_id = data.get('requestId')
+    # Logging for debugging
+    query_data = f"Message: {message} ,User ID: {user_id}, Request ID : {request_id} , Consent: {personal_data_consent}, Content Type: {content_type}" 
+    print(colored(query_data , 'blue'))
+
+    personal_data = collector_instance.get_user_data(user_id , personal_data_consent)
+    generated_data = collector_instance.get_generated_data_from_links(user_id , request_id)
+    # print(colored(personal_data,'yellow'))
+    # print(colored(generated_data,'blue'))
+    # print(colored(content_type,'green'))
+    # print(colored('generating chat response','magenta'))
+    response = collector_instance.chat_response(generated_data,personal_data , content_type , message )
+    # print(colored(generated_data , 'yellow'))
+
+    if collector_instance.store_chat_response(user_id , request_id , query_data , response):
+        socketio.emit('message',{'text':f'{response}'})
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Data processed successfully',
+                    }), 200
+
+    return jsonify({
+            'status': 'failed',
+            'message': 'Failed to process data and store chat response.',
+                    }), 200
+    
+
+
+    # chat_response = chat_response
+
+
+    
+
+
+
+
+
+    
 
 
 if __name__ == '__main__':
     socketio.run( app , port=8080, debug=True)
+

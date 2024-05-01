@@ -12,6 +12,7 @@ termcolor = "*"
 flask-cors = "*"
 flask-socketio = "*"
 pymongo = {extras = ["srv"], version = "*"}
+openai = "*"
 
 [dev-packages]
 ipykernel = "*"
